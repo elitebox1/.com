@@ -1,0 +1,245 @@
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>ELITE GIFTS | WhatsApp Checkout</title>  
+      
+    <script src="https://cdn.tailwindcss.com"></script>  
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>  
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">  
+  
+    <style>  
+        :root { --gold: #D4AF37; --deep: #000000; }  
+        body { font-family: 'Outfit', sans-serif; background: var(--deep); color: white; scroll-behavior: smooth; overflow-x: hidden; }  
+        .font-brand { font-family: 'Syncopate', sans-serif; }  
+          
+        /* Image Quality Fix */  
+        img { image-rendering: -webkit-optimize-contrast; filter: contrast(1.05) brightness(1.05); object-fit: cover; }  
+  
+        #checkoutOverlay { position: fixed; inset: 0; background: black; z-index: 500; display: none; flex-direction: column; overflow-y: auto; }  
+  
+        .elite-input {  
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(212, 175, 55, 0.2);  
+            padding: 1.2rem; border-radius: 15px; width: 100%; outline: none;  
+            color: white; font-weight: 600; transition: 0.3s; margin-bottom: 12px;  
+        }  
+        .elite-input:focus { border-color: var(--gold); background: rgba(255,255,255,0.08); }  
+  
+        .pay-option {   
+            border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 12px;   
+            cursor: pointer; transition: 0.3s; text-align: center; font-size: 10px; font-weight: 900;  
+        }  
+        .pay-option.active { border-color: var(--gold); background: rgba(212, 175, 55, 0.1); color: var(--gold); }  
+  
+        .btn-gold { background: var(--gold); color: black; font-weight: 900; transition: 0.3s; }  
+        .btn-gold:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }  
+  
+        #thankYouScreen { display: none; position: fixed; inset: 0; background: black; z-index: 600; align-items: center; justify-content: center; text-align: center; }  
+    </style>  
+</head>  
+<body>  
+  
+    <div class="bg-[#D4AF37] text-black py-2 px-4 text-center text-[10px] font-black uppercase tracking-widest fixed top-0 w-full z-[200]">  
+        SHOP ELITE | CONFIRM VIA WHATSAPP  
+    </div>  
+  
+    <div id="thankYouScreen">  
+        <div class="px-6">  
+            <div class="text-6xl mb-6">👑</div>  
+            <h2 class="font-brand text-2xl text-[#D4AF37] mb-4">ORDER LOGGED</h2>  
+            <p class="text-gray-400 text-xs tracking-widest uppercase mb-8">If WhatsApp didn't open, click below:</p>  
+              
+            <a id="manualWhatsAppBtn" href="#" target="_blank" class="bg-[#25D366] text-white px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest inline-flex items-center gap-2 mb-4">  
+                <span>Complete on WhatsApp</span>  
+            </a>  
+            <br>  
+            <button onclick="window.location.reload()" class="text-gray-500 uppercase text-[10px] font-bold tracking-widest mt-4">Return to Store</button>  
+        </div>  
+    </div>  
+  
+    <div id="checkoutOverlay">  
+        <div class="max-w-2xl mx-auto w-full px-6 py-24">  
+            <div class="flex justify-between items-center mb-12">  
+                <h2 class="font-brand text-lg text-[#D4AF37] tracking-[0.3em]">YOUR ORDER</h2>  
+                <button onclick="toggleCheckout()" class="text-4xl text-gray-500 hover:text-white">&times;</button>  
+            </div>  
+  
+            <div id="checkoutItems" class="space-y-4 mb-10"></div>  
+  
+            <div class="bg-zinc-950 p-8 rounded-[2rem] border border-white/5 mb-10">  
+                <div class="flex gap-2 mb-6">  
+                    <input type="text" id="voucherCode" placeholder="VOUCHER CODE" class="elite-input mb-0 uppercase text-[10px] tracking-widest">  
+                    <button onclick="applyVoucher()" class="bg-[#D4AF37] text-black px-8 rounded-xl font-black text-[10px] uppercase">Apply</button>  
+                </div>  
+                  
+                <div class="space-y-2 border-b border-white/5 pb-4 mb-4 text-xs tracking-widest text-gray-400 uppercase">  
+                    <div class="flex justify-between"><span>Delivery</span><span>Rs 150</span></div>  
+                    <div id="voucherRow" class="hidden flex justify-between text-green-500"><span>Voucher Applied</span><span>- Rs 160</span></div>  
+                </div>  
+  
+                <div class="flex justify-between items-center">  
+                    <span class="text-xs text-gray-400 uppercase tracking-widest font-black">Total Payable</span>  
+                    <span id="finalPrice" class="text-4xl font-black text-[#D4AF37]">Rs 0</span>  
+                </div>  
+            </div>  
+  
+            <form onsubmit="handleWhatsAppOrder(event)">  
+                <input type="text" id="custName" placeholder="YOUR FULL NAME" required class="elite-input">  
+                <input type="tel" id="custPhone" placeholder="WHATSAPP NUMBER" required class="elite-input">  
+                <textarea id="custAddr" placeholder="FULL DELIVERY ADDRESS" required class="elite-input h-24 resize-none"></textarea>  
+                  
+                <h3 class="text-[10px] font-black mb-4 uppercase text-gray-500 tracking-widest mt-6">Payment Method</h3>  
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">  
+                    <div class="pay-option active" onclick="setPayment('COD', this)">COD</div>  
+                    <div class="pay-option" onclick="setPayment('Bank Transfer', this)">BANK</div>  
+                    <div class="pay-option" onclick="setPayment('EasyPaisa', this)">EASYPAISA</div>  
+                    <div class="pay-option" onclick="setPayment('JazzCash', this)">JAZZCASH</div>  
+                </div>  
+  
+                <button type="submit" class="w-full btn-gold py-6 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs">  
+                    Complete Order on WhatsApp  
+                </button>  
+            </form>  
+        </div>  
+    </div>  
+  
+    <nav class="fixed top-8 w-full z-[100] bg-black/90 backdrop-blur-xl px-8 py-6 flex justify-between items-center border-b border-white/5">  
+        <div class="font-brand text-xl tracking-tighter">ELITE<span class="text-[#D4AF37]">.</span>GIFTS</div>  
+        <button onclick="toggleCheckout()" class="bg-white/5 p-3 rounded-full border border-white/10 relative">  
+            🛒 <span id="cartCount" class="absolute -top-1 -right-1 bg-[#D4AF37] text-black text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-black">0</span>  
+        </button>  
+    </nav>  
+  
+    <header class="h-screen flex items-center justify-center text-center px-6">  
+        <div>  
+            <h3 class="text-[#D4AF37] tracking-[0.8em] uppercase text-[10px] font-black mb-6">Luxury Gifting</h3>  
+            <h1 class="font-brand text-5xl md:text-8xl mb-8 uppercase leading-none">Elite<br><span class="text-[#D4AF37]">Selection.</span></h1>  
+            <a href="#mainGrid" class="btn-gold px-12 py-5 rounded-full text-xs uppercase tracking-widest inline-block">Start Shopping</a>  
+        </div>  
+    </header>  
+  
+    <main id="mainGrid" class="max-w-[1400px] mx-auto px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-40"></main>  
+  
+    <script>  
+        let cart = [];  
+        let discount = 0;  
+        let selectedPayment = "COD";  
+  
+        const products = [  
+            { n: "Small Chocolate Bouquet", p: 350, img: "https://i.ibb.co/q3tRT8zR/image.png" },  
+            { n: "Wish Card", p: 120, img: "https://i.ibb.co/VWtP83FH/image.png" },  
+            { n: "Exclusive Bouquet", p: 1590, img: "https://i.ibb.co/RGV1qvdh/image.png" },  
+            { n: "Lavashak Rolls", p: 300, img: "https://i.ibb.co/GvjM7Dww/image.png" },  
+            { n: "Lavashak Strips (12)", p: 150, img: "https://i.ibb.co/B5sCB6QY/image.png" },  
+            { n: "Fruity Bar (10 Pcs)", p: 150, img: "https://i.ibb.co/0j9zNvL8/image.png" },  
+            { n: "Lavashak Sheets (10)", p: 650, img: "https://i.ibb.co/ZzGfZ4PN/image.png" },  
+            { n: "HBD Gift Box", p: 1590, img: "https://i.ibb.co/mrxDqTbK/image.png" },  
+            { n: "Chocolate Card", p: 99, img: "https://i.ibb.co/xtSGYBjb/image.png" },  
+            { n: "Lavashak Sheets (5)", p: 350, img: "https://i.ibb.co/7xRyQgkL/image.png" },  
+            { n: "Mix Cards Set", p: 120, img: "https://i.ibb.co/fzPjDz6/image.png" },  
+            { n: "Girl Special Card", p: 250, img: "https://i.ibb.co/jP2cmJFX/image.png" },  
+            { n: "Gift Box Premium", p: 2000, img: "https://i.ibb.co/4ZtHpyDG/image.png" },  
+            { n: "Big Bouquet", p: 3500, img: "https://i.ibb.co/0pmb3Hdx/image.png" },  
+            { n: "Lava Cake", p: 120, img: "https://i.ibb.co/rGMmYFjv/image.png" },  
+            { n: "Big Elite Bouquet", p: 3500, img: "https://i.ibb.co/ch8scbNL/image.png" },  
+            { n: "Lash Collection", p: 450, img: "https://i.ibb.co/RGV1qvdh/image.png" }  
+        ];  
+  
+        // Grid Rendering  
+        const grid = document.getElementById('mainGrid');  
+        products.forEach((p, i) => {  
+            grid.innerHTML += `  
+                <div class="bg-zinc-950 p-5 border border-white/5 rounded-[2rem] hover:border-[#D4AF37] transition-all">  
+                    <div class="aspect-square rounded-2xl overflow-hidden mb-6 bg-black border border-white/5">  
+                        <img src="${p.img}" loading="lazy" class="w-full h-full object-cover">  
+                    </div>  
+                    <div class="flex justify-between items-center">  
+                        <div>  
+                            <h4 class="text-[10px] font-black uppercase italic tracking-wider">${p.n}</h4>  
+                            <span class="text-2xl font-black text-[#D4AF37]">Rs ${p.p}</span>  
+                        </div>  
+                        <button onclick="addToCart(${i})" class="bg-white text-black px-6 py-2 rounded-full font-black text-[10px] uppercase">Add</button>  
+                    </div>  
+                </div>`;  
+        });  
+  
+        function addToCart(i) {  
+            cart.push(products[i]);  
+            updateUI();  
+            confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 }, colors: ['#D4AF37'] });  
+        }  
+  
+        function setPayment(method, el) {  
+            selectedPayment = method;  
+            document.querySelectorAll('.pay-option').forEach(x => x.classList.remove('active'));  
+            el.classList.add('active');  
+        }  
+  
+        function toggleCheckout() {  
+            const el = document.getElementById('checkoutOverlay');  
+            el.style.display = (el.style.display === 'flex') ? 'none' : 'flex';  
+        }  
+  
+        function applyVoucher() {  
+            const code = document.getElementById('voucherCode').value.toLowerCase();  
+            if (code === "ahmed") {  
+                discount = 160;  
+                document.getElementById('voucherRow').classList.remove('hidden');  
+            } else {  
+                discount = 0;  
+                document.getElementById('voucherRow').classList.add('hidden');  
+                alert("Invalid Code");  
+            }  
+            updateUI();  
+        }  
+  
+        function updateUI() {  
+            document.getElementById('cartCount').innerText = cart.length;  
+            let subtotal = cart.reduce((s, item) => s + item.p, 0);  
+            let final = subtotal + 150 - discount;  
+            document.getElementById('finalPrice').innerText = `Rs ${Math.max(0, final)}`;  
+  
+            document.getElementById('checkoutItems').innerHTML = cart.map(item => `  
+                <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10 text-[10px] font-bold uppercase italic">  
+                    <span>${item.n}</span>  
+                    <span class="text-[#D4AF37]">Rs ${item.p}</span>  
+                </div>`).join('');  
+        }  
+  
+        function handleWhatsAppOrder(e) {  
+            e.preventDefault();  
+            if(cart.length === 0) return alert("Box is empty!");  
+  
+            const name = document.getElementById('custName').value.toUpperCase();  
+            const phone = document.getElementById('custPhone').value;  
+            const addr = document.getElementById('custAddr').value.toUpperCase();  
+            const items = cart.map(i => i.n.toUpperCase()).join(" | ");  
+            const total = document.getElementById('finalPrice').innerText;  
+  
+            let message = `👑 *NEW ELITE ORDER* 👑\n\n`;  
+            message += `👤 *Customer:* ${name}\n`;  
+            message += `📞 *WhatsApp:* ${phone}\n`;  
+            message += `📍 *Address:* ${addr}\n`;  
+            message += `💳 *Payment:* ${selectedPayment}\n\n`;  
+            message += `📦 *Items:* ${items}\n\n`;  
+            message += `💰 *TOTAL PAYABLE:* ${total}\n`;  
+            message += `------------------------\n`;  
+            message += `_Sent from Elite Gifts Web Store_`;  
+  
+            const waURL = `https://wa.me/923416160018?text=${encodeURIComponent(message)}`;  
+              
+            // Set the backup button link  
+            document.getElementById('manualWhatsAppBtn').href = waURL;  
+  
+            // Open WhatsApp  
+            window.open(waURL, '_blank');  
+  
+            // Show Thank You Screen  
+            document.getElementById('checkoutOverlay').style.display = 'none';  
+            document.getElementById('thankYouScreen').style.display = 'flex';  
+            confetti({ particleCount: 200, spread: 100 });  
+        }  
+    </script>  
+</body>  
+</html>  
